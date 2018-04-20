@@ -1,3 +1,3 @@
-mod console;
-mod panic;
-mod port;
+pub mod console;
+pub mod panic;
+pub mod port;

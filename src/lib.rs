@@ -1,4 +1,5 @@
 #![feature(compiler_builtins_lib)]
+#![feature(ptr_internals)]
 #![feature(const_fn)]
 #![feature(lang_items)]
 #![feature(asm)]
@@ -6,15 +7,23 @@
 #![allow(non_snake_case)]
 #![no_std]
 
+extern crate ascii;
 extern crate compiler_builtins;
 extern crate rlibc;
 extern crate spin;
 extern crate volatile;
 
+#[macro_use]
+extern crate lazy_static;
+
 mod krnl;
+
+use krnl::console::CONSOLE;
 
 #[no_mangle]
 pub extern "C" fn kinitialize() {
+  CONSOLE.lock().clear();
+
   let hello = b"Hello World!";
   let color_byte = 0x1f; // white foreground, blue background
 
@@ -26,6 +35,9 @@ pub extern "C" fn kinitialize() {
   // write `Hello World!` to the center of the VGA text buffer
   let buffer_ptr = 0xb8000 as *mut _;
   unsafe { *buffer_ptr = hello_colored };
+
+  CONSOLE.lock().putch(b'\n');
+  CONSOLE.lock().putch(b'a');
 
   loop {}
 }

@@ -1,16 +1,26 @@
 #[derive(Clone, Copy)]
 pub struct Port(u16);
 
+impl Port {
+  pub fn new(port: u16) -> Port {
+    Port(port)
+  }
+
+  pub fn silbing(self) -> Port {
+    Port(self.0 ^ 1)
+  }
+}
+
 pub unsafe fn inb(port: Port) -> u8 {
   let ret: u8;
   asm!("inb %dx, %al" : "={ax}"(ret) : "{dx}"(port.0) :: "volatile");
-  return ret;
+  ret
 }
 
 pub unsafe fn inw(port: Port) -> u16 {
   let ret: u16;
   asm!("inw %dx, %ax" : "={ax}"(ret) : "{dx}"(port.0) :: "volatile");
-  return ret;
+  ret
 }
 
 pub unsafe fn outb(port: Port, val: u8) {
