@@ -1,8 +1,8 @@
+use ascii::AsciiChar;
 use core::ptr::Unique;
-use krnl::port::*;
+use krnl::port::{inb, outb, Port};
 use spin::Mutex;
 use volatile::Volatile;
-use ascii::AsciiChar;
 
 //
 //  ------------------> y (80)
@@ -11,6 +11,12 @@ use ascii::AsciiChar;
 //  |                 |
 //  x-----------------x
 // (25)
+
+mod video {
+  pub const MAX_ROW: usize = 25;
+  pub const MAX_COLUMN: usize = 80;
+  pub const SIZE: usize = MAX_ROW * MAX_COLUMN;
+}
 
 #[derive(Clone, Copy)]
 #[repr(u8)]
@@ -54,21 +60,11 @@ impl Attribute {
 #[derive(Clone, Copy)]
 #[repr(C)]
 struct ScreenChar {
-  char: u8,
+  ch: u8,
   attrib: Attribute,
 }
 
-struct VideoBuffer {
-  chars:
-    [[Volatile<ScreenChar>; VideoBuffer::MAX_COLUMN]; VideoBuffer::MAX_ROW],
-}
-
-impl VideoBuffer {
-  const BUFFER: *mut VideoBuffer = 0xb8000 as _;
-  const MAX_ROW: usize = 25;
-  const MAX_COLUMN: usize = 80;
-  const SIZE: usize = VideoBuffer::MAX_ROW * VideoBuffer::MAX_COLUMN;
-}
+type VideoBuffer = [[Volatile<ScreenChar>; video::MAX_COLUMN]; video::MAX_ROW];
 
 struct Cursor {
   vport: Port,
@@ -79,7 +75,7 @@ struct Cursor {
 
 impl Cursor {
   fn go(vport: Port, x: usize, y: usize) {
-    let offset: usize = x * VideoBuffer::MAX_COLUMN + y;
+    let offset: usize = x * video::MAX_COLUMN + y;
     let vport2: Port = vport.silbing();
 
     unsafe {
@@ -101,8 +97,8 @@ impl Cursor {
       offset += inb(vport2) as usize;
     }
 
-    let x: usize = offset / VideoBuffer::MAX_COLUMN;
-    let y: usize = offset % VideoBuffer::MAX_COLUMN;
+    let x: usize = offset / video::MAX_COLUMN;
+    let y: usize = offset % video::MAX_COLUMN;
 
     Cursor {
       vport: vport,
@@ -120,7 +116,7 @@ impl Cursor {
 
   fn hide(&mut self) {
     self.show = false;
-    Cursor::go(self.vport, VideoBuffer::MAX_ROW, 0)
+    Cursor::go(self.vport, video::MAX_ROW, 0)
   }
 }
 
@@ -156,18 +152,18 @@ impl Console {
 
   fn scroll(&mut self) {
     let space = ScreenChar {
-      char: AsciiChar::Space as u8,
+      ch: AsciiChar::Space as u8,
       attrib: self.attrib,
     };
 
-    for row in 0..VideoBuffer::MAX_ROW - 1 {
-      for col in 0..VideoBuffer::MAX_COLUMN {
-        let old = self.buffer_ref().chars[row + 1][col].read();
-        self.buffer_mut().chars[row][col].write(old);
+    for row in 0..video::MAX_ROW - 1 {
+      for col in 0..video::MAX_COLUMN {
+        let old = self.buffer_ref()[row + 1][col].read();
+        self.buffer_mut()[row][col].write(old);
       }
     }
-    for col in 0..VideoBuffer::MAX_COLUMN {
-      self.buffer_mut().chars[VideoBuffer::MAX_ROW - 1][col].write(space);
+    for col in 0..video::MAX_COLUMN {
+      self.buffer_mut()[video::MAX_ROW - 1][col].write(space);
     }
   }
 
@@ -178,10 +174,10 @@ impl Console {
   pub fn setcolor(&mut self, fore: Color, back: Color, reset: bool) {
     let attrib: Attribute = Attribute::new(fore, back);
     if reset {
-      for row in 0..VideoBuffer::MAX_ROW {
-        for col in 0..VideoBuffer::MAX_COLUMN {
-          let char = self.buffer_ref().chars[row][col].read().char;
-          self.buffer_mut().chars[row][col].write(ScreenChar { char, attrib });
+      for row in 0..video::MAX_ROW {
+        for col in 0..video::MAX_COLUMN {
+          let ch = self.buffer_ref()[row][col].read().ch;
+          self.buffer_mut()[row][col].write(ScreenChar { ch, attrib });
         }
       }
     }
@@ -190,21 +186,21 @@ impl Console {
 
   pub fn clear(&mut self) {
     let space = ScreenChar {
-      char: AsciiChar::Space as u8,
+      ch: AsciiChar::Space as u8,
       attrib: self.attrib,
     };
 
-    for row in 0..VideoBuffer::MAX_ROW {
-      for col in 0..VideoBuffer::MAX_COLUMN {
-        self.buffer_mut().chars[row][col].write(space);
+    for row in 0..video::MAX_ROW {
+      for col in 0..video::MAX_COLUMN {
+        self.buffer_mut()[row][col].write(space);
       }
     }
     self.cursor.x = 0;
     self.cursor.y = 0;
   }
 
-  pub fn putch(&mut self, char: u8) {
-    match AsciiChar::from(char).unwrap() {
+  pub fn putch(&mut self, ch: u8) {
+    match AsciiChar::from(ch).unwrap() {
       AsciiChar::BackSpace => {
         if self.cursor.y != 0 {
           self.cursor.y -= 1;
@@ -224,15 +220,15 @@ impl Console {
         let row = self.cursor.x;
         let col = self.cursor.y;
         let attrib = self.attrib;
-        self.buffer_mut().chars[row][col].write(ScreenChar { char, attrib });
+        self.buffer_mut()[row][col].write(ScreenChar { ch, attrib });
         self.cursor.y += 1;
       },
     }
-    if self.cursor.y >= VideoBuffer::MAX_COLUMN {
+    if self.cursor.y >= video::MAX_COLUMN {
       self.cursor.y = 0;
       self.cursor.x += 1;
     }
-    if self.cursor.x >= VideoBuffer::MAX_ROW {
+    if self.cursor.x >= video::MAX_ROW {
       self.scroll();
       self.cursor.x -= 1;
     }
