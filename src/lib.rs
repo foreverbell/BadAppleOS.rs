@@ -8,7 +8,7 @@ extern crate volatile;
 extern crate spin;
 
 #[no_mangle]
-pub extern fn _kinitialize() {
+pub extern fn kinitialize() {
   let hello = b"Hello World!";
   let color_byte = 0x1f; // white foreground, blue background
 
