@@ -19,8 +19,10 @@ build:
 build/begin.o: src/begin.asm
 	$(AS) -o build/begin.o $(ASFLAGS) src/begin.asm
 
-build/kernel.elf: build build/begin.o
+kernel:
 	RUST_TARGET_PATH=$(shell pwd) xargo build --target=i686-unknown-none
+
+build/kernel.elf: kernel build build/begin.o
 	cp build/begin.o begin.o
 	$(LD) -o build/kernel.elf $(LDFLAGS) build/begin.o target/i686-unknown-none/debug/libBadAppleOS_rs.a
 	rm -f begin.o
@@ -43,4 +45,4 @@ qemu: iso
 clean:
 	rm -rf build/ target/
 
-.PHONY: docker iso dump qemu clean
+.PHONY: kernel docker iso dump qemu clean
