@@ -17,6 +17,6 @@ pub fn printf(args: fmt::Arguments) {
 
 macro_rules! printf {
   ($($arg:tt)*) => ({
-    util::printf::printf(format_args!($($arg)*));
+    $crate::util::printf::printf(format_args!($($arg)*));
   });
 }

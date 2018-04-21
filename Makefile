@@ -19,13 +19,17 @@ build:
 build/begin.o: src/begin.asm
 	$(AS) -o build/begin.o $(ASFLAGS) src/begin.asm
 
+build/descriptor_flush.o: src/krnl/descriptor_flush.asm
+	$(AS) -o build/descriptor_flush.o $(ASFLAGS) src/krnl/descriptor_flush.asm
+
 kernel:
 	RUST_TARGET_PATH=$(shell pwd) xargo build --target=i686-unknown-none
 
-build/kernel.elf: kernel build build/begin.o
-	cp build/begin.o begin.o
-	$(LD) -o build/kernel.elf $(LDFLAGS) build/begin.o target/i686-unknown-none/debug/libBadAppleOS_rs.a
-	rm -f begin.o
+build/kernel.elf: kernel build build/begin.o build/descriptor_flush.o
+	$(LD) -o build/kernel.elf $(LDFLAGS) \
+		build/begin.o \
+		build/descriptor_flush.o \
+		target/i686-unknown-none/debug/libBadAppleOS_rs.a
 
 build/kernel.bin: build/kernel.elf
 	$(OC) $(OCFLAGS) build/kernel.elf build/kernel.bin
@@ -37,12 +41,15 @@ iso: build/kernel.elf
 	docker run -it --rm -v $(shell pwd):$(shell pwd) -w $(shell pwd) -u `id -u $(shell USER)` grub:latest -o $(ISO) build/iso
 
 dump: build/kernel.bin
-	ndisasm -b32 -o10000h build/kernel.bin > build/dump.txt
+	ndisasm -b32 -oc0010000h build/kernel.bin > build/dump.txt
 
 qemu: iso
 	qemu-system-i386 -cdrom $(ISO)
 
+debug: iso
+	qemu-system-i386 -d int -no-reboot -cdrom $(ISO)
+
 clean:
 	rm -rf build/ target/
 
-.PHONY: kernel docker iso dump qemu clean
+.PHONY: kernel docker iso dump qemu debug clean

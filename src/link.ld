@@ -1,6 +1,6 @@
 phys = 0x10000;    /* physical address of entry point. */
 
-STARTUP(begin.o)
+STARTUP(build/begin.o)
 
 SECTIONS
 {

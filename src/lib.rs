@@ -16,11 +16,13 @@ extern crate volatile;
 #[macro_use]
 extern crate lazy_static;
 
-mod krnl;
 #[macro_use]
 mod util;
+mod krnl;
 
 use krnl::console::CONSOLE;
+use krnl::gdt;
+use krnl::idt;
 
 #[no_mangle]
 pub extern "C" fn kinitialize() {
@@ -45,5 +47,10 @@ pub extern "C" fn kinitialize() {
 
   printf!("{}\n", krnl::sys_time::get());
 
-  loop {}
+  gdt::initialize();
+  idt::initialize();
+
+  unsafe {
+    asm!("hlt");
+  }
 }
