@@ -6,6 +6,10 @@ pub unsafe fn cli() {
   asm!("cli");
 }
 
+pub unsafe fn sti() {
+  asm!("sti");
+}
+
 pub unsafe fn die() {
   cli();
   halt();

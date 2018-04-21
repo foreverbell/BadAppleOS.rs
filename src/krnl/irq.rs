@@ -59,11 +59,11 @@ pub struct IrqContext {
 
 type IrqFn = fn(&IrqContext) -> ();
 
-struct Irq {
+pub struct Irq {
   fns: ([Option<IrqFn>; MAX_IRQ_ENTRIES]),
 }
 
-static IRQ: Mutex<Irq> = Mutex::new(Irq {
+pub static IRQ: Mutex<Irq> = Mutex::new(Irq {
   fns: [None; MAX_IRQ_ENTRIES],
 });
 

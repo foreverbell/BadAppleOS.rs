@@ -50,6 +50,17 @@ fn heap_test() {
   printf!("box = {}\n", *heap_test);
 }
 
+fn keyboard_test() {
+  unsafe { irq::Irq::enable(1); }
+  printf!("Press any key to see an unhandled IRQ.\n");
+}
+
+fn int3_test() {
+  unsafe {
+    asm!("int $$3")
+  }
+}
+
 #[no_mangle]
 pub extern "C" fn kinitialize() {
   console::initialize();
@@ -63,10 +74,13 @@ pub extern "C" fn kinitialize() {
   irq::initialize();
 
   heap_test();
+  keyboard_test();
 
-  unsafe {
-    asm!("int $$3");
-    use krnl::power::halt;
-    halt();
+  loop {
+    unsafe {
+      use krnl::power::{sti, halt};
+      sti();
+      halt();
+    }
   }
 }
