@@ -31,8 +31,8 @@ build/isr_handler.o: src/krnl/isr_handler.asm
 AS_OBJECTS := \
 	build/begin.o \
 	build/descriptor_flush.o \
+	build/irq_handler.o \
 	build/isr_handler.o
-	#build/irq_handler.o \
 
 kernel:
 	RUST_TARGET_PATH=$(shell pwd) xargo build --target=i686-unknown-none

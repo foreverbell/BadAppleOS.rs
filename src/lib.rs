@@ -29,6 +29,7 @@ pub mod krnl;
 use krnl::console;
 use krnl::gdt;
 use krnl::idt;
+use krnl::irq;
 use krnl::isr;
 use mm::allocator::Allocator;
 
@@ -59,6 +60,7 @@ pub extern "C" fn kinitialize() {
   gdt::initialize();
   idt::initialize();
   isr::initialize();
+  irq::initialize();
 
   heap_test();
 

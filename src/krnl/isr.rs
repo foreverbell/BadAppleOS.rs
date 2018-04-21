@@ -59,7 +59,7 @@ pub struct IsrContext {
   edx: u32,
   ecx: u32,
   eax: u32,
-  exception: u32,
+  isr_index: u32,
   error_code: u32,
   eip: u32,
   cs: u32,
@@ -70,7 +70,7 @@ pub struct IsrContext {
 pub extern "C" fn isr_dispatcher(ctx: IsrContext) {
   printf!(
     "Exception = {}, with error code = {}.\n",
-    EXCEPTION_MESSAGE[ctx.exception as usize],
+    EXCEPTION_MESSAGE[ctx.isr_index as usize],
     ctx.error_code
   );
   printf!("Registers:\n");
