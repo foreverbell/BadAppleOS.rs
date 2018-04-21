@@ -8,30 +8,25 @@
 #![no_std]
 
 extern crate ascii;
+#[macro_use]
+extern crate bitflags;
 extern crate compiler_builtins;
+#[macro_use]
+extern crate lazy_static;
 extern crate rlibc;
 extern crate spin;
 extern crate volatile;
 
 #[macro_use]
-extern crate lazy_static;
-
-#[macro_use]
 mod util;
+mod mm;
 mod krnl;
 
 use krnl::console;
 use krnl::gdt;
 use krnl::idt;
 
-#[no_mangle]
-pub extern "C" fn kinitialize() {
-  console::initialize();
-  gdt::initialize();
-  idt::initialize();
-
-  console::CONSOLE.lock().clear();
-
+fn test() {
   let hello = b"Hello World!";
   let color_byte = 0x1f; // white foreground, blue background
 
@@ -50,7 +45,17 @@ pub extern "C" fn kinitialize() {
   printf!(" {:?}\n", Some(666));
 
   printf!("{}\n", krnl::sys_time::get());
+}
 
+#[no_mangle]
+pub extern "C" fn kinitialize() {
+  console::initialize();
+
+  test();
+
+  mm::init::initialize();
+  gdt::initialize();
+  idt::initialize();
 
   unsafe {
     asm!("hlt");

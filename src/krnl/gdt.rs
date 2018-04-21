@@ -5,7 +5,7 @@ extern "C" {
   fn gdt_flush(ptr: u32);
 }
 
-const MAX_ENTRIES: usize = 16;
+const MAX_ENTRIES: usize = 256;
 
 #[repr(C, packed)]
 #[derive(Copy, Clone, Default)]

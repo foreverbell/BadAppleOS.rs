@@ -5,7 +5,7 @@ extern "C" {
   fn idt_flush(ptr: u32);
 }
 
-const MAX_ENTRIES: usize = 16;
+const MAX_ENTRIES: usize = 256;
 
 #[repr(C, packed)]
 #[derive(Copy, Clone, Default)]
@@ -37,7 +37,13 @@ lazy_static! {
 }
 
 impl Idt {
-  pub fn set_gate(self: &mut Idt, index: usize, base: u32, sel: u16, flags: u8) {
+  pub fn set_gate(
+    self: &mut Idt,
+    index: usize,
+    base: u32,
+    sel: u16,
+    flags: u8,
+  ) {
     let entry = &mut self.entries[index];
 
     entry.base_low = (base & 0xffff) as u16;

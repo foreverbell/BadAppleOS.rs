@@ -238,5 +238,8 @@ impl Console {
 }
 
 pub fn initialize() {
-  CONSOLE.lock().setcolor(Color::DEFAULT_FORE, Color::DEFAULT_BACK, true);
+  let mut console = CONSOLE.lock();
+
+  console.setcolor(Color::DEFAULT_FORE, Color::DEFAULT_BACK, true);
+  console.clear();
 }
