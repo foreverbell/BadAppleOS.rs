@@ -20,13 +20,17 @@ extern crate lazy_static;
 mod util;
 mod krnl;
 
-use krnl::console::CONSOLE;
+use krnl::console;
 use krnl::gdt;
 use krnl::idt;
 
 #[no_mangle]
 pub extern "C" fn kinitialize() {
-  CONSOLE.lock().clear();
+  console::initialize();
+  gdt::initialize();
+  idt::initialize();
+
+  console::CONSOLE.lock().clear();
 
   let hello = b"Hello World!";
   let color_byte = 0x1f; // white foreground, blue background
@@ -40,15 +44,13 @@ pub extern "C" fn kinitialize() {
   let buffer_ptr = 0xb8000 as *mut _;
   unsafe { *buffer_ptr = hello_colored };
 
-  CONSOLE.lock().putch(b'\n');
-  CONSOLE.lock().putch(b'a');
+  console::CONSOLE.lock().putch(b'\n');
+  console::CONSOLE.lock().putch(b'a');
 
   printf!(" {:?}\n", Some(666));
 
   printf!("{}\n", krnl::sys_time::get());
 
-  gdt::initialize();
-  idt::initialize();
 
   unsafe {
     asm!("hlt");

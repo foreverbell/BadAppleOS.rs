@@ -129,13 +129,11 @@ pub struct Console {
 lazy_static! {
   pub static ref CONSOLE: Mutex<Console> = {
     let vport = unsafe { Port::new(*(0x463 as *mut u16)) };
-    let mut console = Console {
+    let console = Console {
       buffer: unsafe { Unique::new_unchecked(0xb8000 as *mut _) },
       cursor: Cursor::new(vport),
       attrib: Attribute::DEFAULT,
     };
-
-    console.setcolor(Color::DEFAULT_FORE, Color::DEFAULT_BACK, true);
 
     Mutex::new(console)
   };
@@ -237,4 +235,8 @@ impl Console {
     }
     self.cursor.push()
   }
+}
+
+pub fn initialize() {
+  CONSOLE.lock().setcolor(Color::DEFAULT_FORE, Color::DEFAULT_BACK, true);
 }
