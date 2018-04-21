@@ -2,11 +2,11 @@
 pub struct Port(u16);
 
 impl Port {
-  pub fn new(port: u16) -> Port {
+  pub const fn new(port: u16) -> Port {
     Port(port)
   }
 
-  pub fn silbing(self) -> Port {
+  pub const fn silbing(self) -> Port {
     Port(self.0 ^ 1)
   }
 }

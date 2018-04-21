@@ -41,7 +41,9 @@ pub extern "C" fn kinitialize() {
   CONSOLE.lock().putch(b'\n');
   CONSOLE.lock().putch(b'a');
 
-  printf!(" {:?}", Some(666));
+  printf!(" {:?}\n", Some(666));
+
+  printf!("{}\n", krnl::sys_time::get());
 
   loop {}
 }
