@@ -20,15 +20,26 @@ build/begin.o: src/begin.asm
 	$(AS) -o build/begin.o $(ASFLAGS) src/begin.asm
 
 build/descriptor_flush.o: src/krnl/descriptor_flush.asm
-	$(AS) -o build/descriptor_flush.o $(ASFLAGS) src/krnl/descriptor_flush.asm
+	$(AS) -o $@ $(ASFLAGS) src/krnl/descriptor_flush.asm
+
+build/irq_handler.o: src/krnl/irq_handler.asm
+	$(AS) -o $@ $(ASFLAGS) src/krnl/irq_handler.asm
+
+build/isr_handler.o: src/krnl/isr_handler.asm
+	$(AS) -o $@ $(ASFLAGS) src/krnl/isr_handler.asm
+
+AS_OBJECTS := \
+	build/begin.o \
+	build/descriptor_flush.o \
+	build/isr_handler.o
+	#build/irq_handler.o \
 
 kernel:
 	RUST_TARGET_PATH=$(shell pwd) xargo build --target=i686-unknown-none
 
-build/kernel.elf: kernel build build/begin.o build/descriptor_flush.o
+build/kernel.elf: kernel build $(AS_OBJECTS)
 	$(LD) -o build/kernel.elf $(LDFLAGS) \
-		build/begin.o \
-		build/descriptor_flush.o \
+		$(AS_OBJECTS) \
 		target/i686-unknown-none/debug/libBadAppleOS_rs.a
 
 build/kernel.bin: build/kernel.elf

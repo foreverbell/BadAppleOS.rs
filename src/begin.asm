@@ -59,4 +59,6 @@ begin:
   or  eax, CR0_PE | CR0_PG
   mov cr0, eax
 
-  jmp kinitialize
+  ; directly jump to Rust main, use "jmp eax" to avoid relative jump
+  mov eax, kinitialize
+  jmp eax

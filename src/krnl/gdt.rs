@@ -7,6 +7,9 @@ extern "C" {
 
 const MAX_ENTRIES: usize = 256;
 
+pub const KRNL_CODE_SEL: u16 = 0x8;
+pub const KRNL_DATA_SEL: u16 = 0x10;
+
 #[repr(C, packed)]
 #[derive(Copy, Clone, Default)]
 struct GdtEntry {

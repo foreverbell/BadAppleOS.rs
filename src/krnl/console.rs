@@ -1,6 +1,7 @@
 use ascii::AsciiChar;
 use core::ptr::Unique;
-use krnl::port::{inb, outb, wait, Port};
+use krnl::port;
+use krnl::port::Port;
 use spin::Mutex;
 use volatile::Volatile;
 
@@ -79,10 +80,10 @@ impl Cursor {
     let vport2: Port = vport.silbing();
 
     unsafe {
-      outb(vport, 14);
-      outb(vport2, (offset >> 8) as u8);
-      outb(vport, 15);
-      outb(vport2, offset as u8);
+      port::outb(vport, 14);
+      port::outb(vport2, (offset >> 8) as u8);
+      port::outb(vport, 15);
+      port::outb(vport2, offset as u8);
     }
   }
 
@@ -91,10 +92,10 @@ impl Cursor {
     let vport2: Port = vport.silbing();
 
     unsafe {
-      outb(vport, 0xe);
-      offset = (inb(vport2) as usize) << 8;
-      outb(vport, 0xf);
-      offset += inb(vport2) as usize;
+      port::outb(vport, 0xe);
+      offset = (port::inb(vport2) as usize) << 8;
+      port::outb(vport, 0xf);
+      offset += port::inb(vport2) as usize;
     }
 
     let x: usize = offset / video::MAX_COLUMN;
@@ -197,7 +198,7 @@ impl Console {
     self.cursor.y = 0;
     self.cursor.push();
 
-    unsafe { wait() }
+    unsafe { port::wait() }
   }
 
   pub fn putch(&mut self, ch: u8) {

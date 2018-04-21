@@ -22,30 +22,24 @@ extern crate spin;
 extern crate volatile;
 
 #[macro_use]
-mod util;
-mod mm;
-mod krnl;
+pub mod util;
+pub mod mm;
+pub mod krnl;
 
 use krnl::console;
 use krnl::gdt;
 use krnl::idt;
+use krnl::isr;
 use mm::allocator::Allocator;
 
 #[global_allocator]
 static ALLOCATOR: Allocator = Allocator::instance();
 
 fn test() {
-  console::CONSOLE.lock().setcolor(
-    console::Color::White,
-    console::Color::Blue,
-    false,
-  );
+  use console::Color::*;
+  console::CONSOLE.lock().setcolor(White, Blue, false);
   printf!("Hello World!\n");
-  console::CONSOLE.lock().setcolor(
-    console::Color::LightGrey,
-    console::Color::Black,
-    false,
-  );
+  console::CONSOLE.lock().setcolor(LightGrey, Black, false);
   printf!("{}\n", krnl::sys_time::get());
 }
 
@@ -64,10 +58,13 @@ pub extern "C" fn kinitialize() {
   mm::init::initialize();
   gdt::initialize();
   idt::initialize();
+  isr::initialize();
 
   heap_test();
 
   unsafe {
-    asm!("hlt");
+    asm!("int $$3");
+    use krnl::power::halt;
+    halt();
   }
 }
