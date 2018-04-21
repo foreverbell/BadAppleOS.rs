@@ -1,6 +1,6 @@
 use ascii::AsciiChar;
 use core::ptr::Unique;
-use krnl::port::{inb, outb, Port};
+use krnl::port::{inb, outb, wait, Port};
 use spin::Mutex;
 use volatile::Volatile;
 
@@ -197,6 +197,9 @@ impl Console {
     }
     self.cursor.x = 0;
     self.cursor.y = 0;
+    self.cursor.push();
+
+    unsafe { wait() }
   }
 
   pub fn putch(&mut self, ch: u8) {
@@ -232,5 +235,6 @@ impl Console {
       self.scroll();
       self.cursor.x -= 1;
     }
+    self.cursor.push()
   }
 }

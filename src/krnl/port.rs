@@ -32,5 +32,5 @@ pub unsafe fn outw(port: Port, val: u16) {
 }
 
 pub unsafe fn wait() {
-  asm!("outb %al, $0x80" :: "{al}"(0) :: "volatile");
+  outb(Port(0x80), 0)
 }
