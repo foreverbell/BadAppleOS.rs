@@ -32,12 +32,6 @@ const PORT_MASTER_PIC_DAT: Port = Port::new(0x21);
 const PORT_SLAVE_PIC_CMD: Port = Port::new(0xa0);
 const PORT_SLAVE_PIC_DAT: Port = Port::new(0xa1);
 
-// FOR TIMER
-// const PORT_PIT_CHANNEL0: Port = Port::new(0x40);
-// const PORT_PIT_CHANNEL1: Port = Port::new(0x41);
-// const PORT_PIT_CHANNEL2: Port = Port::new(0x42);
-// const PORT_PIT_CMD: Port = Port::new(0x43);
-
 pub struct IrqContext {
   gs: u32,
   fs: u32,

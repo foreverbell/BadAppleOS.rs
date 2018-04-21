@@ -8,3 +8,4 @@ pub mod panic;
 pub mod port;
 pub mod power;
 pub mod sys_time;
+pub mod timer;

@@ -31,6 +31,7 @@ use krnl::gdt;
 use krnl::idt;
 use krnl::irq;
 use krnl::isr;
+use krnl::timer;
 use mm::allocator::Allocator;
 
 #[global_allocator]
@@ -51,14 +52,14 @@ fn heap_test() {
 }
 
 fn keyboard_test() {
-  unsafe { irq::Irq::enable(1); }
+  unsafe {
+    irq::Irq::enable(1);
+  }
   printf!("Press any key to see an unhandled IRQ.\n");
 }
 
 fn int3_test() {
-  unsafe {
-    asm!("int $$3")
-  }
+  unsafe { asm!("int $$3") }
 }
 
 #[no_mangle]
@@ -72,13 +73,14 @@ pub extern "C" fn kinitialize() {
   idt::initialize();
   isr::initialize();
   irq::initialize();
+  timer::initialize();
 
   heap_test();
-  keyboard_test();
+  // keyboard_test();
 
   loop {
     unsafe {
-      use krnl::power::{sti, halt};
+      use krnl::power::{halt, sti};
       sti();
       halt();
     }
