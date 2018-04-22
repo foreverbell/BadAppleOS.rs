@@ -4,6 +4,7 @@
 #![feature(const_fn)]
 #![feature(global_allocator)]
 #![feature(lang_items)]
+#![feature(offset_to)]
 #![feature(ptr_internals)]
 #![allow(dead_code)]
 #![feature(alloc)]
@@ -25,6 +26,7 @@ extern crate volatile;
 pub mod util;
 pub mod mm;
 pub mod krnl;
+pub mod ba;
 
 use krnl::console;
 use krnl::gdt;
@@ -97,7 +99,10 @@ pub extern "C" fn kinitialize() {
   heap_test();
   // keyboard_test();
 
-  timer_test();
+  use ba::video;
+  video::test();
+
+  // timer_test();
 
   unsafe {
     sti();
