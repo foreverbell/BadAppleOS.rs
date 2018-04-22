@@ -23,6 +23,7 @@ Requires these toolchains,
 Please check `Makefile` first before running these commands for an ISO.
 
 ```sh
+$ make docker
 $ make iso
 $ make qemu
 ```
