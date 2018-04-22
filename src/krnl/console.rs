@@ -13,11 +13,9 @@ use volatile::Volatile;
 //  x-----------------x
 // (25)
 
-mod video {
-  pub const MAX_ROW: usize = 25;
-  pub const MAX_COLUMN: usize = 80;
-  pub const SIZE: usize = MAX_ROW * MAX_COLUMN;
-}
+pub const MAX_ROW: usize = 25;
+pub const MAX_COLUMN: usize = 80;
+pub const SIZE: usize = MAX_ROW * MAX_COLUMN;
 
 #[derive(Clone, Copy)]
 #[repr(u8)]
@@ -47,25 +45,35 @@ impl Color {
 
 // An attribute is composition of two colors - the foreground and background.
 #[derive(Clone, Copy)]
-struct Attribute(u8);
+pub struct Attribute(u8);
 
 impl Attribute {
-  const fn new(fore: Color, back: Color) -> Attribute {
+  pub const fn new(fore: Color, back: Color) -> Attribute {
     Attribute((back as u8) << 4 | (fore as u8))
   }
-
-  const DEFAULT: Attribute =
-    Attribute::new(Color::DEFAULT_FORE, Color::DEFAULT_BACK);
 }
 
-#[derive(Clone, Copy)]
+impl Default for Attribute {
+  fn default() -> Attribute {
+    Attribute::new(Color::DEFAULT_FORE, Color::DEFAULT_BACK)
+  }
+}
+
+#[derive(Clone, Copy, Default)]
 #[repr(C)]
-struct ScreenChar {
+pub struct ScreenChar {
   ch: u8,
   attrib: Attribute,
 }
 
-type VideoBuffer = [[Volatile<ScreenChar>; video::MAX_COLUMN]; video::MAX_ROW];
+impl ScreenChar {
+  pub const fn new(ch: u8, attrib: Attribute) -> ScreenChar {
+    ScreenChar { ch, attrib }
+  }
+}
+
+pub type ConsoleBuf = [[ScreenChar; MAX_COLUMN]; MAX_ROW];
+pub type ConsoleBufVolatile = [[Volatile<ScreenChar>; MAX_COLUMN]; MAX_ROW];
 
 struct Cursor {
   vport: Port,
@@ -76,7 +84,7 @@ struct Cursor {
 
 impl Cursor {
   fn go(vport: Port, x: usize, y: usize) {
-    let offset: usize = x * video::MAX_COLUMN + y;
+    let offset: usize = x * MAX_COLUMN + y;
     let vport2: Port = vport.silbing();
 
     unsafe {
@@ -98,8 +106,8 @@ impl Cursor {
       offset += port::inb(vport2) as usize;
     }
 
-    let x: usize = offset / video::MAX_COLUMN;
-    let y: usize = offset % video::MAX_COLUMN;
+    let x: usize = offset / MAX_COLUMN;
+    let y: usize = offset % MAX_COLUMN;
 
     Cursor {
       vport: vport,
@@ -117,12 +125,12 @@ impl Cursor {
 
   fn hide(&mut self) {
     self.show = false;
-    Cursor::go(self.vport, video::MAX_ROW, 0)
+    Cursor::go(self.vport, MAX_ROW, 0)
   }
 }
 
 pub struct Console {
-  buffer: Unique<VideoBuffer>,
+  buf: Unique<ConsoleBufVolatile>,
   cursor: Cursor,
   attrib: Attribute,
 }
@@ -131,9 +139,9 @@ lazy_static! {
   pub static ref CONSOLE: Mutex<Console> = {
     let vport = unsafe { Port::new(*(0x463 as *mut u16)) };
     let console = Console {
-      buffer: unsafe { Unique::new_unchecked(0xb8000 as *mut _) },
+      buf: unsafe { Unique::new_unchecked(0xb8000 as *mut _) },
       cursor: Cursor::new(vport),
-      attrib: Attribute::DEFAULT,
+      attrib: Default::default(),
     };
 
     Mutex::new(console)
@@ -141,12 +149,12 @@ lazy_static! {
 }
 
 impl Console {
-  fn buffer_ref(&self) -> &VideoBuffer {
-    unsafe { self.buffer.as_ref() }
+  fn buf_ref(&self) -> &ConsoleBufVolatile {
+    unsafe { self.buf.as_ref() }
   }
 
-  fn buffer_mut(&mut self) -> &mut VideoBuffer {
-    unsafe { self.buffer.as_mut() }
+  fn buf_mut(&mut self) -> &mut ConsoleBufVolatile {
+    unsafe { self.buf.as_mut() }
   }
 
   fn scroll(&mut self) {
@@ -155,14 +163,14 @@ impl Console {
       attrib: self.attrib,
     };
 
-    for row in 0..video::MAX_ROW - 1 {
-      for col in 0..video::MAX_COLUMN {
-        let old = self.buffer_ref()[row + 1][col].read();
-        self.buffer_mut()[row][col].write(old);
+    for row in 0..MAX_ROW - 1 {
+      for col in 0..MAX_COLUMN {
+        let old = self.buf_ref()[row + 1][col].read();
+        self.buf_mut()[row][col].write(old);
       }
     }
-    for col in 0..video::MAX_COLUMN {
-      self.buffer_mut()[video::MAX_ROW - 1][col].write(space);
+    for col in 0..MAX_COLUMN {
+      self.buf_mut()[MAX_ROW - 1][col].write(space);
     }
   }
 
@@ -173,10 +181,10 @@ impl Console {
   pub fn setcolor(&mut self, fore: Color, back: Color, reset: bool) {
     let attrib: Attribute = Attribute::new(fore, back);
     if reset {
-      for row in 0..video::MAX_ROW {
-        for col in 0..video::MAX_COLUMN {
-          let ch = self.buffer_ref()[row][col].read().ch;
-          self.buffer_mut()[row][col].write(ScreenChar { ch, attrib });
+      for row in 0..MAX_ROW {
+        for col in 0..MAX_COLUMN {
+          let ch = self.buf_ref()[row][col].read().ch;
+          self.buf_mut()[row][col].write(ScreenChar { ch, attrib });
         }
       }
     }
@@ -189,9 +197,22 @@ impl Console {
       attrib: self.attrib,
     };
 
-    for row in 0..video::MAX_ROW {
-      for col in 0..video::MAX_COLUMN {
-        self.buffer_mut()[row][col].write(space);
+    for row in 0..MAX_ROW {
+      for col in 0..MAX_COLUMN {
+        self.buf_mut()[row][col].write(space);
+      }
+    }
+    self.cursor.x = 0;
+    self.cursor.y = 0;
+    self.cursor.push();
+
+    unsafe { port::wait() }
+  }
+
+  pub fn bkcpy(&mut self, buf: &ConsoleBuf) {
+    for row in 0..MAX_ROW {
+      for col in 0..MAX_COLUMN {
+        self.buf_mut()[row][col].write(buf[row][col]);
       }
     }
     self.cursor.x = 0;
@@ -222,15 +243,15 @@ impl Console {
         let row = self.cursor.x;
         let col = self.cursor.y;
         let attrib = self.attrib;
-        self.buffer_mut()[row][col].write(ScreenChar { ch, attrib });
+        self.buf_mut()[row][col].write(ScreenChar { ch, attrib });
         self.cursor.y += 1;
       },
     }
-    if self.cursor.y >= video::MAX_COLUMN {
+    if self.cursor.y >= MAX_COLUMN {
       self.cursor.y = 0;
       self.cursor.x += 1;
     }
-    if self.cursor.x >= video::MAX_ROW {
+    if self.cursor.x >= MAX_ROW {
       self.scroll();
       self.cursor.x -= 1;
     }

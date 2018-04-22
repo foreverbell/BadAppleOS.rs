@@ -28,57 +28,114 @@ pub mod mm;
 pub mod krnl;
 pub mod ba;
 
+use ba::video;
 use krnl::console;
 use krnl::gdt;
 use krnl::idt;
 use krnl::irq;
 use krnl::isr;
 use krnl::power::{idle, sti};
+use krnl::sys_time;
 use krnl::timer;
 use mm::allocator::Allocator;
+use spin::Mutex;
 
 #[global_allocator]
 static ALLOCATOR: Allocator = Allocator::instance();
 
-fn test() {
-  use console::Color::*;
-  console::CONSOLE.lock().setcolor(White, Blue, false);
-  printf!("Hello World!\n");
-  console::CONSOLE.lock().setcolor(LightGrey, Black, false);
-  printf!("{}\n", krnl::sys_time::get());
-}
+mod test {
+  use krnl::console;
+  use krnl::irq;
+  use krnl::timer;
 
-fn heap_test() {
-  use alloc::boxed::Box;
-  let heap_test = Box::new(42);
-  printf!("box = {}\n", *heap_test);
-}
+  pub fn console_test() {
+    use console::Color::*;
+    use krnl::sys_time;
 
-fn keyboard_test() {
-  unsafe {
-    irq::Irq::enable(1);
+    console::CONSOLE.lock().setcolor(White, Blue, false);
+    printf!("Hello World!\n");
+    console::CONSOLE.lock().setcolor(LightGrey, Black, false);
+    printf!("{}\n", sys_time::get());
   }
-  printf!("Press any key to see an unhandled IRQ.\n");
+
+  pub fn heap_test() {
+    use alloc::boxed::Box;
+    let heap_test = Box::new(42);
+    printf!("box = {}\n", *heap_test);
+  }
+
+  pub fn keyboard_test() {
+    unsafe {
+      irq::Irq::enable(1);
+    }
+    printf!("Press any key to see an unhandled IRQ.\n");
+  }
+
+  pub fn int3_test() {
+    unsafe { asm!("int $$3") }
+  }
+
+  pub fn timer_test() {
+    let mut timer = timer::TIMER.lock();
+    timer.add(
+      5,
+      |t: &mut timer::Timer, _td: timer::TimerDescriptor, tick: u64| {
+        printf!(
+          "5 ticks has passed, {}, triggered {} times.\n",
+          t.ticks(),
+          tick
+        );
+      },
+    );
+  }
 }
 
-fn int3_test() {
-  unsafe { asm!("int $$3") }
+lazy_static! {
+  pub static ref BADAPPLE: Mutex<video::Video> = Mutex::new(video::Video::new());
 }
 
-fn foo(t: &mut timer::Timer, _td: timer::TimerDescriptor, tick: u64) -> () {
-  printf!("5 ticks has passed, {}, {}.\n", t.ticks(), tick);
-}
+fn play() {
+  const FPS: u64 = 9;
+  const TIMER_TICK_PER_SECOND: u64 = 18;
 
-fn timer_test() {
-  let mut timer = timer::TIMER.lock();
-  timer.add(
-    5,
-    |t: &mut timer::Timer, _td: timer::TimerDescriptor, tick: u64| -> () {
-      printf!(
-        "5 ticks has passed, {}, triggered {} times.\n",
-        t.ticks(),
-        tick
-      );
+  BADAPPLE.lock().initialize();
+
+  timer::TIMER.lock().add(
+    TIMER_TICK_PER_SECOND,
+    |timer: &mut timer::Timer,
+     descriptor: timer::TimerDescriptor,
+     count: u64| {
+      if count < 3 {
+        printf!("\rBadApple, {} second(s) to go", 3 - count);
+        for _ in 0..count {
+          printf!(".");
+        }
+      } else {
+        timer.remove(descriptor);
+        timer.add(
+          TIMER_TICK_PER_SECOND / FPS,
+          |timer: &mut timer::Timer,
+           descriptor: timer::TimerDescriptor,
+           _: u64| {
+            let mut v = BADAPPLE.lock();
+            if v.has_next() {
+              v.next();
+              printf!(" ({}%) ", v.progress());
+            } else {
+              timer.remove(descriptor);
+              console::CONSOLE.lock().clear();
+              printf!("Thank you for watching!\n");
+              printf!("https://github.com/foreverbell/BadAppleOS.rs.\n");
+              timer.add(
+                1,
+                |_: &mut timer::Timer, _: timer::TimerDescriptor, _: u64| {
+                  printf!("\rCurrent system time = {}.", sys_time::get());
+                },
+              );
+            }
+          },
+        );
+      }
     },
   );
 }
@@ -86,8 +143,9 @@ fn timer_test() {
 #[no_mangle]
 pub extern "C" fn kinitialize() {
   console::initialize();
+  printf!("Successfully landed to protected mode.\n");
 
-  test();
+  // test::console_test();
 
   mm::init::initialize();
   gdt::initialize();
@@ -96,13 +154,11 @@ pub extern "C" fn kinitialize() {
   irq::initialize();
   timer::initialize();
 
-  heap_test();
-  // keyboard_test();
+  // test::heap_test();
+  // test::keyboard_test();
 
-  use ba::video;
-  video::test();
-
-  // timer_test();
+  // test::timer_test();
+  play();
 
   unsafe {
     sti();
