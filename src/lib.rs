@@ -31,6 +31,7 @@ use krnl::gdt;
 use krnl::idt;
 use krnl::irq;
 use krnl::isr;
+use krnl::power::{idle, sti};
 use krnl::timer;
 use mm::allocator::Allocator;
 
@@ -68,7 +69,16 @@ fn foo(t: &mut timer::Timer, _td: timer::TimerDescriptor, tick: u64) -> () {
 
 fn timer_test() {
   let mut timer = timer::TIMER.lock();
-  timer.add(5, foo);
+  timer.add(
+    5,
+    |t: &mut timer::Timer, _td: timer::TimerDescriptor, tick: u64| -> () {
+      printf!(
+        "5 ticks has passed, {}, triggered {} times.\n",
+        t.ticks(),
+        tick
+      );
+    },
+  );
 }
 
 #[no_mangle]
@@ -89,11 +99,9 @@ pub extern "C" fn kinitialize() {
 
   timer_test();
 
-  loop {
-    unsafe {
-      use krnl::power::{halt, sti};
-      sti();
-      halt();
-    }
+  unsafe {
+    sti();
   }
+
+  idle();
 }

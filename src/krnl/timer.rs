@@ -37,7 +37,6 @@ impl Timer {
     self.ticks
   }
 
-  // TODO: cli for add and remove.
   pub fn add(&mut self, interval: u64, f: TimerFn) -> Option<TimerDescriptor> {
     if interval == 0 {
       return None;

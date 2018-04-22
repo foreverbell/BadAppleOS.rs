@@ -14,3 +14,11 @@ pub unsafe fn die() {
   cli();
   halt();
 }
+
+pub fn idle() {
+  unsafe {
+    loop {
+      halt();
+    }
+  }
+}
