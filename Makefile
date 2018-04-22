@@ -35,12 +35,12 @@ AS_OBJECTS := \
 	build/isr_handler.o
 
 kernel:
-	RUST_TARGET_PATH=$(shell pwd) xargo build --target=i686-unknown-none
+	RUST_TARGET_PATH=$(shell pwd) xargo build --target=i686-unknown-none --release
 
 build/kernel.elf: kernel build $(AS_OBJECTS)
 	$(LD) -o build/kernel.elf $(LDFLAGS) \
 		$(AS_OBJECTS) \
-		target/i686-unknown-none/debug/libBadAppleOS_rs.a
+		target/i686-unknown-none/release/libBadAppleOS_rs.a
 
 build/kernel.bin: build/kernel.elf
 	$(OC) $(OCFLAGS) build/kernel.elf build/kernel.bin

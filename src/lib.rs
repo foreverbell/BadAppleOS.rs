@@ -62,6 +62,15 @@ fn int3_test() {
   unsafe { asm!("int $$3") }
 }
 
+fn foo(t: &mut timer::Timer, _td: timer::TimerDescriptor, tick: u64) -> () {
+  printf!("5 ticks has passed, {}, {}.\n", t.ticks(), tick);
+}
+
+fn timer_test() {
+  let mut timer = timer::TIMER.lock();
+  timer.add(5, foo);
+}
+
 #[no_mangle]
 pub extern "C" fn kinitialize() {
   console::initialize();
@@ -77,6 +86,8 @@ pub extern "C" fn kinitialize() {
 
   heap_test();
   // keyboard_test();
+
+  timer_test();
 
   loop {
     unsafe {

@@ -24,7 +24,7 @@ extern "C" {
 }
 
 const IRQ_VECTOR_OFFSET: u8 = 32;
-const MAX_IRQ_ENTRIES: usize = 16;
+const MAX_ENTRIES: usize = 16;
 
 const PORT_MASTER_PIC_CMD: Port = Port::new(0x20);
 const PORT_MASTER_PIC_DAT: Port = Port::new(0x21);
@@ -54,31 +54,31 @@ pub struct IrqContext {
 type IrqFn = fn(&IrqContext) -> ();
 
 pub struct Irq {
-  fns: ([Option<IrqFn>; MAX_IRQ_ENTRIES]),
+  entries: ([Option<IrqFn>; MAX_ENTRIES]),
 }
 
 pub static IRQ: Mutex<Irq> = Mutex::new(Irq {
-  fns: [None; MAX_IRQ_ENTRIES],
+  entries: [None; MAX_ENTRIES],
 });
 
 impl Irq {
   // install an IRQ handler.
   pub fn install(&mut self, index: usize, handler: IrqFn) {
-    if self.fns[index].is_some() {
+    if self.entries[index].is_some() {
       printf!(
         "[irq::install] IRQ{} handler already exists, overwritten.\n",
         index
       );
     }
-    self.fns[index] = Some(handler)
+    self.entries[index] = Some(handler)
   }
 
   // uninstall an IRQ handler.
   pub fn uninstall(&mut self, index: usize) {
-    if self.fns[index].is_none() {
+    if self.entries[index].is_none() {
       printf!("[irq::uninstall] IRQ{} handler not exists.\n", index);
     }
-    self.fns[index] = None
+    self.entries[index] = None
   }
 
   unsafe fn set_mask(index: i32, set: bool) {
@@ -109,7 +109,7 @@ impl Irq {
 #[no_mangle]
 pub extern "C" fn irq_dispatcher(ctx: IrqContext) {
   let irq_index = ctx.irq_index as usize;
-  let irq_fn = IRQ.lock().fns[irq_index];
+  let irq_fn = IRQ.lock().entries[irq_index];
 
   if irq_fn.is_none() {
     printf!("[IRQ dispatcher] Unhandled IRQ {}.\n", irq_index);
