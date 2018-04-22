@@ -76,6 +76,11 @@ fn handler(_ctx: &irq::IrqContext) {
     Some(mut timer) => {
       timer.ticks += 1;
 
+      // Otherwise, we look into the timer table for active timers.
+      // Notice when invoking callbacks, we pass in the global TIMER instance
+      // as a parameter, so we can do some operations on timer in the callback,
+      // without acquiring the lock again (which is impossible because there
+      // will be a deadlock).
       for i in 0..MAX_ENTRIES {
         if timer.entries[i].is_none() {
           continue;
@@ -94,6 +99,7 @@ fn handler(_ctx: &irq::IrqContext) {
           let e = timer.entries[i].unwrap();
           let f = e.f;
           let tick = e.trigger_count;
+          // Timer callback is executed in a co-operative way.
           f(&mut timer, TimerDescriptor(i), tick);
         }
       }

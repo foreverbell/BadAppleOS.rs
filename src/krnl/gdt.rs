@@ -73,11 +73,11 @@ impl Gdt {
 pub fn initialize() {
   let mut gdt = GDT.lock();
 
-  /* setup gdt gates. */
+  // setup gdt gates.
   gdt.set_gate(0, 0, 0x0, 0x0, 0x0); // null gdt entry
   gdt.set_gate(1, 0, 0xffff, 0x9a, 0xcf); // code segment
   gdt.set_gate(2, 0, 0xffff, 0x92, 0xcf); // data segment
 
-  /* flush gdt. */
+  // flush gdt.
   gdt.flush();
 }

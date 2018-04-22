@@ -130,7 +130,7 @@ impl Cursor {
 }
 
 pub struct Console {
-  buf: Unique<ConsoleBufVolatile>,
+  buf: Unique<ConsoleBufVolatile>, // volatile buffer to prevent Rust from optimizing writes away.
   cursor: Cursor,
   attrib: Attribute,
 }

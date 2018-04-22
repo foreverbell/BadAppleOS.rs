@@ -1,7 +1,7 @@
-use core::slice::from_raw_parts;
 use alloc::boxed::Box;
 use alloc::vec::Vec;
 use ba::stream::Stream;
+use core::slice::from_raw_parts;
 
 struct TrieNode {
   child: [Option<Box<TrieNode>>; 2],

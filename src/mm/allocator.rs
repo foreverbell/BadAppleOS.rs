@@ -4,8 +4,15 @@ use core::sync::atomic::{AtomicUsize, Ordering};
 const KRNL_MEM_BEGIN: usize = 0xc0400000;
 const KRNL_MEM_END: usize = 0xc0c00000;
 
-// TODO TODO
-// Explain why here we need AtomicUsize rather than Mutex.
+// A very simple lock-free allocator. It is so simple that it doesn't have a
+// free!
+
+// Allocation may happen when interrupt is enabled, so it is a must to
+// implement a lock-free allocation algorithm. Otherwise when allocation is
+// interrupted, there is a deadlock if kernel wants to allocate new memory.
+//
+// Mutex is allowed if we use separated allocators when interrupt is enabled
+// or disabled.
 
 pub struct Allocator(AtomicUsize);
 

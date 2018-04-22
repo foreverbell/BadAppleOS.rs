@@ -9,10 +9,8 @@ const NVRAM_EXTHI: u8 = 0x18;
 const NVRAM_EXT16LO: u8 = 0x34;
 const NVRAM_EXT16HI: u8 = 0x35;
 
-//
 // Use CMOS calls to detect available base & extended memory.
 // Measured in kilobytes.
-//
 fn detect() {
   let read = |register: u8| -> u32 { cmos::read(register) as u32 };
 

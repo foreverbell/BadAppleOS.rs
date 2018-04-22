@@ -1,3 +1,4 @@
+#![feature(alloc)]
 #![feature(allocator_api)]
 #![feature(asm)]
 #![feature(compiler_builtins_lib)]
@@ -7,7 +8,6 @@
 #![feature(offset_to)]
 #![feature(ptr_internals)]
 #![allow(dead_code)]
-#![feature(alloc)]
 #![allow(non_snake_case)]
 #![no_std]
 

@@ -14,6 +14,7 @@ pub struct Video {
   frames: Vec<console::ConsoleBuf>,
 }
 
+// artify the frame to emphasize boundary.
 pub fn artify(frame: &mut console::ConsoleBuf) {
   const DXY: [[isize; 2]; 4] = [[-1, 0], [1, 0], [0, -1], [0, 1]];
   const DOT_CHARS: [char; 4] = [',', '.', '\'', '`'];

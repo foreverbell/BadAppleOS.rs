@@ -15,6 +15,7 @@ pub extern "C" fn panic_fmt(
   line: u32,
   column: u32,
 ) -> () {
+  // TODO: May deadlock here if CONSOLE lock is held by other guys.
   printf!("panic at {} L{}:{}.\n", file, line, column);
   unsafe {
     die();
