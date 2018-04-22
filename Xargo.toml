@@ -1,2 +1,2 @@
-[target.i686-unknown-none.dependencies]
+[target.i386-unknown-none.dependencies]
 alloc = {}

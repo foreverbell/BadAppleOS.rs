@@ -1,5 +1,5 @@
 {
-  "llvm-target": "i686-unknown-none",
+  "llvm-target": "i386-unknown-none",
 
   "arch": "x86",
   "os": "none",
