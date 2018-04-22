@@ -16,6 +16,12 @@ docker:
 build:
 	mkdir -p build
 
+build/vdata.bin:
+	python resource/encode.py resource/video.txt build/vdata.bin
+
+build/vdata.o: build/vdata.bin
+	objcopy -B i386 -I binary -O elf32-i386 build/vdata.bin build/vdata.o
+
 build/begin.o: src/begin.asm
 	$(AS) -o build/begin.o $(ASFLAGS) src/begin.asm
 
@@ -37,9 +43,10 @@ AS_OBJECTS := \
 kernel:
 	RUST_TARGET_PATH=$(shell pwd) xargo build --target=i686-unknown-none --release
 
-build/kernel.elf: kernel build $(AS_OBJECTS)
+build/kernel.elf: kernel build $(AS_OBJECTS) build/vdata.o
 	$(LD) -o build/kernel.elf $(LDFLAGS) \
 		$(AS_OBJECTS) \
+		build/vdata.o \
 		target/i686-unknown-none/release/libBadAppleOS_rs.a
 
 build/kernel.bin: build/kernel.elf
