@@ -62,8 +62,8 @@ impl Default for Attribute {
 #[derive(Clone, Copy, Default)]
 #[repr(C)]
 pub struct ScreenChar {
-  ch: u8,
-  attrib: Attribute,
+  pub ch: u8,
+  pub attrib: Attribute,
 }
 
 impl ScreenChar {

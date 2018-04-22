@@ -28,6 +28,8 @@ pub mod mm;
 pub mod krnl;
 pub mod ba;
 
+mod test;
+
 use ba::video;
 use krnl::console;
 use krnl::gdt;
@@ -43,65 +45,18 @@ use spin::Mutex;
 #[global_allocator]
 static ALLOCATOR: Allocator = Allocator::instance();
 
-mod test {
-  use krnl::console;
-  use krnl::irq;
-  use krnl::timer;
-
-  pub fn console_test() {
-    use console::Color::*;
-    use krnl::sys_time;
-
-    console::CONSOLE.lock().setcolor(White, Blue, false);
-    printf!("Hello World!\n");
-    console::CONSOLE.lock().setcolor(LightGrey, Black, false);
-    printf!("{}\n", sys_time::get());
-  }
-
-  pub fn heap_test() {
-    use alloc::boxed::Box;
-    let heap_test = Box::new(42);
-    printf!("box = {}\n", *heap_test);
-  }
-
-  pub fn keyboard_test() {
-    unsafe {
-      irq::Irq::enable(1);
-    }
-    printf!("Press any key to see an unhandled IRQ.\n");
-  }
-
-  pub fn int3_test() {
-    unsafe { asm!("int $$3") }
-  }
-
-  pub fn timer_test() {
-    let mut timer = timer::TIMER.lock();
-    timer.add(
-      5,
-      |t: &mut timer::Timer, _td: timer::TimerDescriptor, tick: u64| {
-        printf!(
-          "5 ticks has passed, {}, triggered {} times.\n",
-          t.ticks(),
-          tick
-        );
-      },
-    );
-  }
-}
-
 lazy_static! {
-  pub static ref BADAPPLE: Mutex<video::Video> = Mutex::new(video::Video::new());
+  static ref BADAPPLE: Mutex<video::Video> = Mutex::new(video::Video::new());
 }
 
 fn play() {
   const FPS: u64 = 9;
-  const TIMER_TICK_PER_SECOND: u64 = 18;
+  const TICK_PER_SEC: u64 = 18;
 
   BADAPPLE.lock().initialize();
 
   timer::TIMER.lock().add(
-    TIMER_TICK_PER_SECOND,
+    TICK_PER_SEC,
     |timer: &mut timer::Timer,
      descriptor: timer::TimerDescriptor,
      count: u64| {
@@ -113,7 +68,7 @@ fn play() {
       } else {
         timer.remove(descriptor);
         timer.add(
-          TIMER_TICK_PER_SECOND / FPS,
+          TICK_PER_SEC / FPS,
           |timer: &mut timer::Timer,
            descriptor: timer::TimerDescriptor,
            _: u64| {
@@ -142,7 +97,11 @@ fn play() {
 
 #[no_mangle]
 pub extern "C" fn kinitialize() {
+  #[allow(unused_imports)]
+  use test;
+
   console::initialize();
+
   printf!("Successfully landed to protected mode.\n");
 
   // test::console_test();
@@ -156,13 +115,13 @@ pub extern "C" fn kinitialize() {
 
   // test::heap_test();
   // test::keyboard_test();
-
   // test::timer_test();
-  play();
 
   unsafe {
     sti();
   }
+
+  play();
 
   idle();
 }

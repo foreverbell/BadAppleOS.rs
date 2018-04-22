@@ -51,9 +51,9 @@ pub fn decompress(ptr_from: *const u8, ptr_to: *const u8) -> Decompressed {
   let s_buf = read_u32(&bytes[2..6]) as usize;
   let n_keys = bytes[6] as usize;
 
-  printf!("[decompressor] frame count = {}.\n", n_frames);
-  printf!("[decompressor] buffer size = {}.\n", s_buf);
-  printf!("[decompressor] key count = {}.\n", n_keys);
+  printf!("[decompressor] Frame count = {}.\n", n_frames);
+  printf!("[decompressor] Buffer size = {}.\n", s_buf);
+  printf!("[decompressor] Key count = {}.\n", n_keys);
 
   let mut buf = Vec::new();
   buf.resize(s_buf, 0);
@@ -90,7 +90,7 @@ pub fn decompress(ptr_from: *const u8, ptr_to: *const u8) -> Decompressed {
     }
   }
 
-  printf!("[decompressor] remaining {} bits.\n", reader.remain());
+  printf!("[decompressor] Remaining {} bits.\n", reader.remain());
 
   Decompressed { n_frames, buf }
 }
