@@ -4,6 +4,7 @@
 #![feature(compiler_builtins_lib)]
 #![feature(const_fn)]
 #![feature(global_allocator)]
+#![feature(integer_atomics)]
 #![feature(lang_items)]
 #![feature(offset_to)]
 #![feature(ptr_internals)]

@@ -1,9 +1,6 @@
-use core::sync::atomic::{AtomicUsize, Ordering};
+use core::sync::atomic::{AtomicU32, Ordering};
 
-// HACK HACK
-type AtomicU64 = AtomicUsize;
-
-static NEXT: AtomicU64 = AtomicU64::new(1);
+static NEXT: AtomicU32 = AtomicU32::new(1);
 
 pub fn rand() -> u32 {
   loop {
@@ -11,11 +8,11 @@ pub fn rand() -> u32 {
     let next = cur * 214013 + 2531011;
     let old = NEXT.compare_and_swap(cur, next, Ordering::Relaxed);
     if old == cur {
-      return ((next >> 16) & 0x7fff) as u32;
+      return (next >> 16) & 0x7fff;
     }
   }
 }
 
 pub fn srand(seed: u32) {
-  NEXT.store(seed as usize, Ordering::Relaxed);
+  NEXT.store(seed, Ordering::Relaxed);
 }
