@@ -29,8 +29,6 @@ pub mod mm;
 pub mod krnl;
 pub mod ba;
 
-mod test;
-
 use ba::video;
 use krnl::console;
 use krnl::gdt;
@@ -40,6 +38,7 @@ use krnl::isr;
 use krnl::power::{idle, sti};
 use krnl::sys_time;
 use krnl::timer;
+use krnl::keyboard;
 use mm::allocator::Allocator;
 use spin::Mutex;
 
@@ -82,6 +81,8 @@ fn play() {
               console::CONSOLE.lock().clear();
               printf!("Thank you for watching!\n");
               printf!("https://github.com/foreverbell/BadAppleOS.rs.\n");
+              printf!("Press Enter to reboot.\n");
+              keyboard::initialize();
               timer.add(
                 1,
                 |_: &mut timer::Timer, _: timer::TimerDescriptor, _: u64| {
@@ -98,14 +99,9 @@ fn play() {
 
 #[no_mangle]
 pub extern "C" fn kinitialize() {
-  #[allow(unused_imports)]
-  use test;
-
   console::initialize();
 
   printf!("Successfully landed to protected mode.\n");
-
-  // test::console_test();
 
   mm::init::initialize();
   gdt::initialize();
@@ -113,10 +109,6 @@ pub extern "C" fn kinitialize() {
   isr::initialize();
   irq::initialize();
   timer::initialize();
-
-  // test::heap_test();
-  // test::keyboard_test();
-  // test::timer_test();
 
   unsafe {
     sti();
