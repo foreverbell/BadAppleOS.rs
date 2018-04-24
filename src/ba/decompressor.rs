@@ -43,7 +43,10 @@ fn read_u32(bytes: &[u8]) -> u32 {
   ret
 }
 
-pub fn decompress(ptr_from: *const u8, ptr_to: *const u8) -> Decompressed {
+pub fn decompress(
+  ptr_from: *const u8,
+  ptr_to: *const u8,
+) -> Option<Decompressed> {
   let len = ptr_from.offset_to(ptr_to).unwrap() as usize;
   let mut bytes: &[u8] = unsafe { from_raw_parts(ptr_from, len) };
 
@@ -81,7 +84,7 @@ pub fn decompress(ptr_from: *const u8, ptr_to: *const u8) -> Decompressed {
   for i in 0..buf.len() {
     loop {
       let bit = reader.next_byte() as usize;
-      node = node.child[bit].as_ref().unwrap();
+      node = node.child[bit].as_ref()?;
       if node.label.is_some() {
         buf[i] = node.label.unwrap();
         node = &trie;
@@ -92,5 +95,5 @@ pub fn decompress(ptr_from: *const u8, ptr_to: *const u8) -> Decompressed {
 
   printf!("[decompressor] Remaining {} bits.\n", reader.remain());
 
-  Decompressed { n_frames, buf }
+  Some(Decompressed { n_frames, buf })
 }

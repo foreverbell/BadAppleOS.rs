@@ -30,6 +30,6 @@ impl<'a> Stream<'a> {
   }
 
   pub fn remain(&self) -> usize {
-    (self.data.len() - self.seek as usize) * 8 - self.shift as usize
+    (self.data.len() - self.seek) * 8 - self.shift
   }
 }

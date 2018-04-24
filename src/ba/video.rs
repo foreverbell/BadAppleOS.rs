@@ -89,29 +89,32 @@ impl Video {
 
     printf!("[video] Decompressing data.\n");
 
-    let decompressed = decompress(vdata_start, vdata_end);
+    match decompress(vdata_start, vdata_end) {
+      Some(decompressed) => {
+        self.n_frames = decompressed.n_frames;
+        self.frames = Vec::new();
 
-    self.n_frames = decompressed.n_frames;
-    self.frames = Vec::new();
+        let mut reader = Stream::new(decompressed.buf.as_slice());
 
-    let mut reader = Stream::new(decompressed.buf.as_slice());
-
-    self.frames.resize(
-      self.n_frames,
-      [[Default::default(); console::MAX_COLUMN]; console::MAX_ROW],
-    );
-    for f in 0..self.n_frames {
-      for row in 0..console::MAX_ROW {
-        for col in 0..console::MAX_COLUMN {
-          let ch = if reader.next_byte() == 0 { '%' } else { ' ' };
-          self.frames[f][row][col] =
-            console::ScreenChar::new(ch as u8, Default::default());
+        self.frames.resize(
+          self.n_frames,
+          [[Default::default(); console::MAX_COLUMN]; console::MAX_ROW],
+        );
+        for f in 0..self.n_frames {
+          for row in 0..console::MAX_ROW {
+            for col in 0..console::MAX_COLUMN {
+              let ch = if reader.next_byte() == 0 { '%' } else { ' ' };
+              self.frames[f][row][col] =
+                console::ScreenChar::new(ch as u8, Default::default());
+            }
+          }
+          artify(&mut self.frames[f]);
         }
-      }
-      artify(&mut self.frames[f]);
-    }
 
-    printf!("[video] Data loaded.\n");
+        printf!("[video] Data loaded.\n");
+      },
+      None => printf!("[video] Corrupted Data.\n"),
+    }
   }
 
   pub fn progress(&self) -> usize {
